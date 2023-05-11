@@ -1,0 +1,58 @@
+-- In this analysis, the project focuses on locating hotels within a city and providing locations and 
+-- distances between them. --While the concept of their service comparison is not brought up, 
+-- the OpenStreetMap dataset bundle provides spatial data that helps with the analysis of geo locations structures. 
+-- The city in question is New York City. The hotels in NYC were easily located and distances between them computed 
+-- effectively, using the OpenStreetMap data. 
+
+-- --------------------------------------------------------------------------------------------------------------
+
+-- 1. Retrieve Locations of specific features
+-- Retrieve the locations of hotels in the specified city
+SELECT name, ST_AsText(way) as location 
+FROM planet_osm_point 
+WHERE amenity = 'hotel' AND city = 'City Name';
+
+
+-- 2. Calculate Distance between points
+-- Calculate the distance between pairs of hotels in the specified city
+SELECT a.name AS hotel1, b.name AS hotel2, ST_Distance_Sphere(a.way, b.way)/1000 AS distance_km 
+FROM planet_osm_point a, planet_osm_point b 
+WHERE a.amenity = 'hotel' AND b.amenity = 'hotel' AND a.city = 'City Name' AND b.city = 'City Name' AND a.name != b.name;
+
+
+-- 3. Calculate Areas of Interest
+-- Calculate the area of the specified administrative boundary in the city
+SELECT name, ST_Area(way)/1000000 AS area_sqkm 
+FROM planet_osm_polygon 
+WHERE boundary = 'administrative' AND admin_level = '9' AND name = 'City Name';
+
+
+-- 4. Analyze the queries
+-- Analyze the query plan for retrieving hotel locations
+EXPLAIN SELECT name, ST_AsText(way) as location 
+FROM planet_osm_point 
+WHERE amenity = 'hotel' AND city = 'City Name';
+
+
+
+-- 5. Sorting and Limit Executions
+-- To add sorting to the query, we used the `ORDER BY` clause. For example, to sort the hotels by their names:
+-- Retrieve hotel locations and sort by name
+SELECT name, ST_AsText(way) as location 
+FROM planet_osm_point 
+WHERE amenity = 'hotel' AND city = 'City Name'
+ORDER BY name;
+
+
+-- To limit the number of rows returned, we used the `LIMIT` clause. 
+-- Retrieve hotel locations and limit to top 10
+SELECT name, ST_AsText(way) as location 
+FROM planet_osm_point 
+WHERE amenity = 'hotel' AND city = 'City Name'
+LIMIT 10;
+
+
+-- 6. Optimize the queries to speed up execution time
+-- Indexes help the database quickly locate and retrieve data, resulting in faster query performance. 
+-- Create an index on the amenity column in planet_osm_point table
+CREATE INDEX idx_planet_osm_point_amenity ON planet_osm_point (amenity);
